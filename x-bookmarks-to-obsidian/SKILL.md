@@ -1,11 +1,25 @@
 ---
 name: x-bookmarks-to-obsidian
-description: Sync X (Twitter) bookmarks into an Obsidian vault as markdown notes, clone any GitHub repos mentioned in them locally, and transcribe repo READMEs into dev-doc notes. Use when user mentions "X 收藏夹", "bookmarks 转 obsidian", "sync X bookmarks", "收藏夹收集", or wants to archive X bookmarks into Obsidian.
+description: Sync X (Twitter) bookmarks into an Obsidian vault as markdown notes, clone any GitHub repos mentioned in them locally, and transcribe repo READMEs into dev-doc notes. Also saves a single X/Twitter URL into the vault. Use when user mentions "X 收藏夹", "bookmarks 转 obsidian", "sync X bookmarks", "收藏夹收集", "保存这条推文", "记录这个 x 地址", or wants to archive X content into Obsidian.
 ---
 
 # X Bookmarks to Obsidian
 
-把 X 收藏夹批量转写进 Obsidian vault，并把收藏夹里提到的 GitHub 仓库 clone 到本地、转录成开发文档笔记。
+把 X 收藏夹批量转写进 Obsidian vault，并把收藏夹里提到的 GitHub 仓库 clone 到本地、转录成开发文档笔记。也支持录入单条 X 链接（见「单条录入」）。
+
+## 单条录入
+
+输入一个 X 地址（`https://x.com/<user>/status/<id>` 或 `https://x.com/i/article/<id>`）时，走批量工作流的精简版，跳过步骤 2–3：
+
+1. 前置检查（步骤 1）。
+2. 按步骤 4 的方式转换该 URL（独立临时目录 → 复制进 `<vault>/X Bookmarks/<username>/`）。
+3. 按步骤 5 描述性重命名。
+4. 把新笔记按作者插入 `X Bookmarks Index.md` 对应分组（作者分组不存在则新建），不重写整个索引。
+5. 笔记里若含 GitHub 仓库链接，询问用户是否要 clone + 转录开发文档（步骤 7–8），默认单条录入只登记不展开。
+6. 把该 tweet id 合并进 `.sync-state.json`。
+7. 汇报笔记路径。
+
+若该 id 已在 `.sync-state.json` 中，直接指向已有笔记，不重复转换。
 
 ## 依赖
 
