@@ -17,7 +17,7 @@ description: Sync X (Twitter) bookmarks into an Obsidian vault as markdown notes
 | 项 | 默认值 | 说明 |
 |----|--------|------|
 | Vault 路径 | `D:/Obsidian Vault/AI Research` | 不存在则创建；可用 env `OBSIDIAN_VAULT_DIR` 覆盖 |
-| 收藏夹笔记目录 | `<vault>/X Bookmarks/` | 每条推文一个子目录 `<username>/<tweet-id>.md` |
+| 收藏夹笔记目录 | `<vault>/X Bookmarks/` | 每条推文一个子目录 `<username>/<标题>-<tweet-id>.md` |
 | 索引笔记 | `<vault>/X Bookmarks Index.md` | 按作者分组的 wikilink 列表 |
 | 状态文件 | `<vault>/X Bookmarks/.sync-state.json` | 记录已处理 tweet id，增量同步 |
 | 仓库 clone 目录 | `D:/x-bookmarks-repos` | 可用 env `X_BOOKMARKS_REPO_DIR` 覆盖 |
@@ -46,23 +46,36 @@ stdout 输出 JSON 数组：`[{id, url, author, text, createdAt}]`，日志在 s
 对每条新书签：
 
 ```bash
-npx -y bun <baoyu>/scripts/main.ts <url> -o "<vault>/X Bookmarks/"
+npx -y bun <baoyu>/scripts/main.ts <url> -o "<临时目录>/"   # 再复制进 vault
 ```
 
-产出 `<vault>/X Bookmarks/<username>/<tweet-id>.md`。媒体下载遵循 baoyu EXTEND.md 的 `download_media` 设置（`ask` 时对整批统一问一次即可）。失败的条目记录下来继续，最后汇总。
+产出 `<username>/<tweet-id>.md`，复制到 `<vault>/X Bookmarks/<username>/` 下合并。**不要直接用 `-o "<vault>/X Bookmarks/"`**：baoyu 的 `main.ts` 在目标作者目录已存在时会把整个目录改名成 `<username>-backup-<时间戳>` 再重建，同作者多条书签会互相覆盖、只留最后一条。每条转进独立临时目录再复制可规避。
 
-### 5. 更新索引笔记
+媒体下载遵循 baoyu EXTEND.md 的 `download_media` 设置（`ask` 时对整批统一问一次即可）。
 
-刷新 `<vault>/X Bookmarks Index.md`：按作者分组，列出所有收藏笔记的 `[[wikilink]]`（Obsidian wikilink 只需笔记名，如 `[[1823456789012345678]]`）。
+**限流**：批量转换可能触发 `X API error (429)`。出现 429 时不要密集重试——完全静置约 15 分钟（零请求），再以条目间隔 ≥15s 慢速重试。失败的条目记录下来继续，最后汇总。
 
-### 6. 处理 GitHub 仓库
+### 5. 描述性重命名
 
-扫描本次新笔记中的 `https://github.com/<owner>/<repo>` 链接：
+纯数字的 `<tweet-id>.md` 在 Obsidian 里难以辨认。转换完成后，为每条新笔记生成描述性文件名：
+
+- 读正文概括主题作为标题，≤20 字符，用正文语言（中文推文用中文）；
+- 去掉文件系统非法字符（`\ / : * ? " < > |`）与首尾空格、点；
+- 命名为 `<标题>-<tweet-id>.md`，保留 id 后缀保证唯一性、与 `.sync-state.json` 可对应；
+- 文件名变更后，同步更新索引与 vault 内所有指向旧名的 `[[wikilink]]`。
+
+### 6. 更新索引笔记
+
+刷新 `<vault>/X Bookmarks Index.md`：按作者分组，列出所有收藏笔记的 `[[wikilink]]`（wikilink 用文件名去 `.md` 后缀，如 `[[小模型加Harness-2089717198327583193]]`）。
+
+### 7. 处理 GitHub 仓库
+
+扫描本次新笔记中的 `https://github.com/<owner>/<repo>` 链接。注意：X 会把外链转成 `t.co` 短链，若笔记正文里 GitHub 链接以 t.co 形式存在，可先 HEAD 请求解析其跳转目标再判断。
 
 - 去重；跳过 gist、`/issues/`、`/pull/`、`/blob/`、`/tree/` 等非仓库根链接（取 owner/repo 两段即可）。
 - 对每个仓库：`git clone https://github.com/<owner>/<repo> <repo-dir>/<repo>`；已存在则 `git -C <repo-dir>/<repo> pull --ff-only`。
 
-### 7. 转录开发文档笔记
+### 8. 转录开发文档笔记
 
 对每个新 clone 的仓库：
 
@@ -71,7 +84,7 @@ npx -y bun <baoyu>/scripts/main.ts <url> -o "<vault>/X Bookmarks/"
 3. 笔记底部附：GitHub 链接、本地路径、`[[wikilink]]` 回链来源推文笔记。
 4. 把该笔记加入 `X Bookmarks Index.md`。
 
-### 8. 更新状态并汇报
+### 9. 更新状态并汇报
 
 把成功处理的 tweet id 写入 `.sync-state.json`（结构：`{"processedIds": [...], "updatedAt": "<ISO>"}`），然后汇报：新增 N 条收藏笔记、M 个仓库、失败条目及原因。
 
