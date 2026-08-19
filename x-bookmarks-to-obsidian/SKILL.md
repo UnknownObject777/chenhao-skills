@@ -12,9 +12,9 @@ description: Sync X (Twitter) bookmarks into an Obsidian vault as markdown notes
 输入一个 X 地址（`https://x.com/<user>/status/<id>` 或 `https://x.com/i/article/<id>`）时，走批量工作流的精简版，跳过步骤 2–3：
 
 1. 前置检查（步骤 1）。
-2. 按步骤 4 的方式转换该 URL（独立临时目录 → 复制进 `<vault>/X Bookmarks/<username>/`）。
-3. 按步骤 5 描述性重命名。
-4. 把新笔记按作者插入 `X Bookmarks Index.md` 对应分组（作者分组不存在则新建），不重写整个索引。
+2. 按步骤 4 的方式转换该 URL（独立临时目录 → 复制进 `<vault>/X Bookmarks/`）。
+3. 按步骤 5 描述性重命名并归入对应主题子目录。
+4. 把新笔记插入 `X Bookmarks Index.md` 对应主题分组（主题不存在则新建），不重写整个索引。
 5. 笔记里若含 GitHub 仓库链接，询问用户是否要 clone + 转录开发文档（步骤 7–8），默认单条录入只登记不展开。
 6. 把该 tweet id 合并进 `.sync-state.json`。
 7. 汇报笔记路径。
@@ -31,8 +31,8 @@ description: Sync X (Twitter) bookmarks into an Obsidian vault as markdown notes
 | 项 | 默认值 | 说明 |
 |----|--------|------|
 | Vault 路径 | `D:/Obsidian Vault/AI Research` | 不存在则创建；可用 env `OBSIDIAN_VAULT_DIR` 覆盖 |
-| 收藏夹笔记目录 | `<vault>/X Bookmarks/` | 每条推文一个子目录 `<username>/<标题>-<tweet-id>.md` |
-| 索引笔记 | `<vault>/X Bookmarks Index.md` | 按作者分组的 wikilink 列表 |
+| 收藏夹笔记目录 | `<vault>/X Bookmarks/` | 每条推文一个子目录 `<主题>/<标题>-<tweet-id>.md` |
+| 索引笔记 | `<vault>/X Bookmarks Index.md` | 按内容主题分组的 wikilink 列表 |
 | 状态文件 | `<vault>/X Bookmarks/.sync-state.json` | 记录已处理 tweet id，增量同步 |
 | 仓库 clone 目录 | `D:/x-bookmarks-repos` | 可用 env `X_BOOKMARKS_REPO_DIR` 覆盖 |
 
@@ -63,7 +63,7 @@ stdout 输出 JSON 数组：`[{id, url, author, text, createdAt}]`，日志在 s
 npx -y bun <baoyu>/scripts/main.ts <url> -o "<临时目录>/"   # 再复制进 vault
 ```
 
-产出 `<username>/<tweet-id>.md`，复制到 `<vault>/X Bookmarks/<username>/` 下合并。**不要直接用 `-o "<vault>/X Bookmarks/"`**：baoyu 的 `main.ts` 在目标作者目录已存在时会把整个目录改名成 `<username>-backup-<时间戳>` 再重建，同作者多条书签会互相覆盖、只留最后一条。每条转进独立临时目录再复制可规避。
+产出 `<username>/<tweet-id>.md`，复制到 `<vault>/X Bookmarks/` 下。**不要直接用 `-o "<vault>/X Bookmarks/"`**：baoyu 的 `main.ts` 在目标作者目录已存在时会把整个目录改名成 `<username>-backup-<时间戳>` 再重建，同作者多条书签会互相覆盖、只留最后一条。每条转进独立临时目录再复制可规避。
 
 媒体下载遵循 baoyu EXTEND.md 的 `download_media` 设置（`ask` 时对整批统一问一次即可）。
 
@@ -76,11 +76,12 @@ npx -y bun <baoyu>/scripts/main.ts <url> -o "<临时目录>/"   # 再复制进 v
 - 读正文概括主题作为标题，≤20 字符，用正文语言（中文推文用中文）；
 - 去掉文件系统非法字符（`\ / : * ? " < > |`）与首尾空格、点；
 - 命名为 `<标题>-<tweet-id>.md`，保留 id 后缀保证唯一性、与 `.sync-state.json` 可对应；
-- 文件名变更后，同步更新索引与 vault 内所有指向旧名的 `[[wikilink]]`。
+- 按内容相关性把笔记归入 `<vault>/X Bookmarks/<主题>/` 子目录（5–8 个简洁中文主题，尽量沿用既有主题；不是按作者分）；
+- 文件名或目录变更后，同步更新索引与 vault 内所有指向旧名的 `[[wikilink]]`。
 
 ### 6. 更新索引笔记
 
-刷新 `<vault>/X Bookmarks Index.md`：按作者分组，列出所有收藏笔记的 `[[wikilink]]`（wikilink 用文件名去 `.md` 后缀，如 `[[小模型加Harness-2089717198327583193]]`）。
+刷新 `<vault>/X Bookmarks Index.md`：按内容主题分组，列出所有收藏笔记的 `[[wikilink]]`（wikilink 用文件名去 `.md` 后缀，如 `[[小模型加Harness-2089717198327583193]]`），每条可附 ≤15 字备注。
 
 ### 7. 处理 GitHub 仓库
 
