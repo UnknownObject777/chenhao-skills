@@ -15,7 +15,7 @@ import { pathToFileURL } from "node:url";
 
 // Last-resort query id, only used when discovery from the client bundle fails.
 // X rotates these ids; update this constant if the fallback ever starts failing.
-const FALLBACK_BOOKMARKS_QUERY_ID = "pMlJRj3rGEiwCpX67KTFSA";
+const FALLBACK_BOOKMARKS_QUERY_ID = "iblrFnKr6PZUR-dWpfXG6g";
 
 type LogFn = (message: string) => void;
 
@@ -54,27 +54,30 @@ async function importBaoyuModule(scriptsDir: string, name: string): Promise<any>
   return import(pathToFileURL(path.join(scriptsDir, name)).href);
 }
 
-async function fetchAppShellHtml(
-  http: any,
+async function fetchBookmarksPageHtml(
   cookieMap: Record<string, string>,
-  userAgent: string,
-  bearerToken: string
+  userAgent: string
 ): Promise<string> {
-  // The logged-out homepage now serves a new frontend without the client-web
-  // bundle manifest, so prefer the authenticated app shell which still
-  // references the `api.<hash>` chunk; fall back to the plain homepage.
-  try {
-    const response = await fetch("https://x.com/home", {
-      headers: http.buildRequestHeaders(cookieMap, userAgent, bearerToken),
-    });
-    if (response.ok) {
-      const html = await response.text();
-      if (/api:\"[a-zA-Z0-9_-]+\"/.test(html)) return html;
-    }
-  } catch {
-    // fall through to the unauthenticated homepage
+  // The logged-out homepage serves a new frontend without the client-web bundle
+  // manifest; the authenticated bookmarks page still ships the classic app with
+  // the webpack chunk tables we need. Browser-like headers are required —
+  // buildRequestHeaders (accept: application/json) gets a 401 here.
+  const cookieHeader = Object.entries(cookieMap)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("; ");
+  const response = await fetch("https://x.com/i/bookmarks", {
+    headers: {
+      "user-agent": userAgent,
+      cookie: cookieHeader,
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-language": "en-US,en;q=0.9",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to load bookmarks page (${response.status})`);
   }
-  return http.fetchHomeHtml(userAgent);
+  return response.text();
 }
 
 async function resolveBookmarksQueryInfo(
@@ -82,29 +85,48 @@ async function resolveBookmarksQueryInfo(
   constants: any,
   cookieMap: Record<string, string>,
   userAgent: string,
-  bearerToken: string
+  log: LogFn
 ) {
-  const html: string = await fetchAppShellHtml(http, cookieMap, userAgent, bearerToken);
-  const apiHash = html.match(/api:\"([a-zA-Z0-9_-]+)\"/)?.[1] ?? null;
-  if (!apiHash) {
-    return {
-      queryId: FALLBACK_BOOKMARKS_QUERY_ID,
-      featureSwitches: constants.FALLBACK_TWEET_FEATURE_SWITCHES as string[],
-      html,
-    };
+  // The authenticated page embeds two webpack tables: chunk-id -> chunk-name
+  // (e.g. 69742:"bundle.Bookmarks") and chunk-id -> content hash. The GraphQL
+  // query id lives in one of the bookmark chunks — probe them all.
+  const html = await fetchBookmarksPageHtml(cookieMap, userAgent);
+  // Name values must contain a non-hex character so the hash table (id:"f95ecf5")
+  // cannot overwrite real chunk names when both tables use the same ids.
+  const names = new Map<string, string>(
+    [...html.matchAll(/(\d+):\"([A-Za-z0-9\/~.-]*[.~\/g-zA-Z][A-Za-z0-9\/~.-]*)\"/g)].map((m) => [m[1]!, m[2]!])
+  );
+  const hashes = new Map<string, string>(
+    [...html.matchAll(/(\d+):\"([a-f0-9]{7,8})\"/g)].map((m) => [m[1]!, m[2]!])
+  );
+
+  const candidates = [...names.entries()].filter(
+    ([id, name]) => name.includes("bundle.Bookmarks") && hashes.has(id)
+  );
+  for (const [id, name] of candidates) {
+    const chunkUrl = `https://abs.twimg.com/responsive-web/client-web/${name}.${hashes.get(id)}a.js`;
+    try {
+      const chunk = await http.fetchText(chunkUrl, { headers: { "user-agent": userAgent } });
+      const queryIdMatch = chunk.match(/queryId:\"([^\"]+)\",operationName:\"Bookmarks\"/);
+      if (!queryIdMatch) continue;
+      const featureMatch = chunk.match(/operationName:\"Bookmarks\"[\s\S]*?featureSwitches:\[(.*?)\]/);
+      const featureSwitches = http.parseStringList(featureMatch?.[1]);
+      log(`[x-bookmarks] Query id discovered in chunk: ${name}`);
+      return {
+        queryId: queryIdMatch[1] as string,
+        featureSwitches:
+          featureSwitches.length > 0 ? featureSwitches : (constants.FALLBACK_TWEET_FEATURE_SWITCHES as string[]),
+        html,
+      };
+    } catch {
+      continue;
+    }
   }
 
-  const chunkUrl = `https://abs.twimg.com/responsive-web/client-web/api.${apiHash}a.js`;
-  const chunk = await http.fetchText(chunkUrl, { headers: { "user-agent": userAgent } });
-
-  const queryIdMatch = chunk.match(/queryId:\"([^\"]+)\",operationName:\"Bookmarks\"/);
-  const featureMatch = chunk.match(/operationName:\"Bookmarks\"[\s\S]*?featureSwitches:\[(.*?)\]/);
-  const featureSwitches = http.parseStringList(featureMatch?.[1]);
-
+  log("[x-bookmarks] Query id discovery failed, using fallback constant.");
   return {
-    queryId: queryIdMatch?.[1] ?? FALLBACK_BOOKMARKS_QUERY_ID,
-    featureSwitches:
-      featureSwitches.length > 0 ? featureSwitches : (constants.FALLBACK_TWEET_FEATURE_SWITCHES as string[]),
+    queryId: FALLBACK_BOOKMARKS_QUERY_ID,
+    featureSwitches: constants.FALLBACK_TWEET_FEATURE_SWITCHES as string[],
     html,
   };
 }
@@ -140,9 +162,9 @@ function parseBookmarkEntries(payload: any): { bookmarks: BookmarkEntry[]; curso
       if (!id) continue;
 
       const legacy = tweet?.legacy ?? {};
-      const userLegacy =
-        tweet?.core?.user_results?.result?.legacy ?? tweet?.core?.user_result?.result?.legacy ?? {};
-      const screenName: string = userLegacy?.screen_name ?? "i";
+      const userResult = tweet?.core?.user_results?.result ?? tweet?.core?.user_result?.result ?? {};
+      // Newer responses use `core.screen_name`; older ones nest it under `legacy`.
+      const screenName: string = userResult?.core?.screen_name ?? userResult?.legacy?.screen_name ?? "i";
 
       bookmarks.push({
         id,
@@ -257,7 +279,7 @@ async function main(): Promise<void> {
   }
 
   log("[x-bookmarks] Resolving Bookmarks query id...");
-  const queryInfo = await resolveBookmarksQueryInfo(http, constants, cookieMap, userAgent, bearerToken);
+  const queryInfo = await resolveBookmarksQueryInfo(http, constants, cookieMap, userAgent, log);
   log(`[x-bookmarks] Using query id: ${queryInfo.queryId}`);
 
   const seen = new Set<string>();
