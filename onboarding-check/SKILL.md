@@ -45,7 +45,7 @@ Completion criterion: every probe carries a classification, and no item was skip
 - **Not ready**: any hard rule shaky or absent, or a scope-central term absent. Immediately output the **gap checklist**. For each gap:
   1. **Concept** — the repo term, or the underlying general concept when the gap is background knowledge (e.g. DI, DDD, ORM, monorepo versioning).
   2. **Why it matters here** — one line, tied to the repo location that uses it.
-  3. **Where to learn it** — the specific repo file for repo terms; the general concept name to study for background knowledge.
+  3. **Where to learn it** — the specific repo file for repo terms; for background knowledge, a link to the concept's plain-language explainer, resolved via `references/learning-resources.md` (VibeHub glossary), not just the concept name.
   4. **Re-check probe** — the question you'll ask to verify the gap has closed.
 
 Completion criterion: every shaky or absent item appears on the checklist with all four fields, and a newcomer reading only the checklist knows exactly what to learn and how they will be re-tested.
