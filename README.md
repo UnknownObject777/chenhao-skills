@@ -4,6 +4,7 @@
 
 ## Skills
 
+- [asu](asu/SKILL.md) — 中文求职经历酥化技能：根据目标岗位把真实经历重组为清晰的岗位定位、简历要点、项目亮点和 HR 开场白。
 - [chrome-bookmark-reorganize](chrome-bookmark-reorganize/SKILL.md) — 重新分类/整理 Chrome 书签，处理本地 Bookmarks 文件与 Google 同步冲突。
 - [dsh-archive-agent-notes](dsh-archive-agent-notes/SKILL.md) — 新增/审计/归档/恢复 DeepSeek Harness 的 Agent Notes，按未来决策价值分类并清理已被取代的记录。
 - [dsh-code-review](dsh-code-review/SKILL.md) — 按仓库的 AGENTS.md 规范、防御性模式和质检门槛审查 deepseek-harness 的 PR。
