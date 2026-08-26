@@ -1,0 +1,58 @@
+{
+  "name": "fireworks-open-eli5",
+  "version": "1.0.0",
+  "description": "Evidence-aware, interactive visual explainers as deterministic offline HTML.",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yizhiyanhua-ai/fireworks-open-eli5.git"
+  },
+  "homepage": "https://github.com/yizhiyanhua-ai/fireworks-open-eli5#readme",
+  "bugs": {
+    "url": "https://github.com/yizhiyanhua-ai/fireworks-open-eli5/issues"
+  },
+  "keywords": [
+    "agent-skill",
+    "codex",
+    "eli5",
+    "evidence",
+    "explainer",
+    "offline-html",
+    "visualization"
+  ],
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md",
+    "agents/",
+    "assets/",
+    "!assets/logo-master.png",
+    "evals/evals.json",
+    "evals/trigger-evals.json",
+    "evals/fixtures/",
+    "references/",
+    "scripts/",
+    "tests/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "quick_validate": "node scripts/quick-validate.mjs",
+    "check:syntax": "node --check scripts/quick-validate.mjs && node --check scripts/render.mjs && node --check scripts/serve.mjs && node --check scripts/validate.mjs && node --check scripts/check-release.mjs && node --check scripts/install-canary.mjs && node --check scripts/agent-install-canary.mjs && node --check tests/fireworks-open-eli5.test.mjs",
+    "check:release": "node scripts/check-release.mjs",
+    "check:install": "node scripts/install-canary.mjs",
+    "check:agent-install": "node scripts/agent-install-canary.mjs",
+    "check": "npm run check:syntax && npm test && npm run quick_validate && npm run check:release && npm run check:install",
+    "serve": "node scripts/serve.mjs"
+  }
+}

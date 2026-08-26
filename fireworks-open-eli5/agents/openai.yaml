@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fireworks Open ELI5"
+  short_description: "Build evidence-aware interactive visual explainers"
+  default_prompt: "Use $fireworks-open-eli5 to explain this with an evidence-aware, interactive offline visual."
+policy:
+  allow_implicit_invocation: true

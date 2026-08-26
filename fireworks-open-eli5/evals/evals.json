@@ -1,0 +1,74 @@
+{
+  "skill_name": "fireworks-open-eli5",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "给第一次学网络的人做一张交互解释页：DNS 查询到底经历了什么？要区分通讯录类比和真实机制，并让一次请求沿图播放。",
+      "expected_output": "A validated zh-CN concept spec and deterministic offline HTML explainer.",
+      "expectations": [
+        "The output is a self-contained HTML artifact generated from a version 1 spec.",
+        "The truth ladder visibly separates the address-book analogy, technical DNS behavior, and caveats.",
+        "The trace follows real node IDs and the failure lens includes a cache failure.",
+        "At least one verified RFC source has an inspectable HTTPS URL.",
+        "Teach-back questions are present with hidden answers."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Inspect src/runner and explain how one queued job moves from the HTTP handler through validation, persistence, execution, and result callbacks. Cite real local files and show what breaks when the lease expires.",
+      "expected_output": "A validated module-mode spec and offline HTML grounded in inspected repository paths.",
+      "expectations": [
+        "The story starts at an entry point and follows a queued job through each state transition.",
+        "Verified evidence cites real inspected local paths.",
+        "The technical layer does not claim behavior unsupported by repository evidence.",
+        "A lease-expiry failure shows impact, visible symptom, and fallback.",
+        "The final artifact passes the bundled spec and HTML validators."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create an offline visual that helps an engineering team choose Server-Sent Events or WebSockets for a mostly server-to-client status stream. Trace the same reconnecting client through both and avoid declaring a universal winner.",
+      "expected_output": "A validated tradeoff-mode explainer that compares both options against one shared scenario.",
+      "expectations": [
+        "The explainer states the shared goal before comparing SSE and WebSockets.",
+        "Both options are evaluated in the same reconnecting-client scenario.",
+        "The decision rule is conditional and does not declare a universal winner.",
+        "Caveats and evidence statuses remain visible.",
+        "The artifact is self-contained and makes no remote runtime requests."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Turn this postmortem evidence into a visual incident walkthrough: a popular cache key expired, origin QPS rose 18x, latency alerts fired four minutes later, and request coalescing restored service. Mark the still-unproven trigger as inferred.",
+      "expected_output": "A validated incident-mode explainer with explicit evidence boundaries.",
+      "expectations": [
+        "The walkthrough distinguishes the normal path, first break, propagation, detection, and recovery.",
+        "The observed 18x QPS rise and four-minute alert lag are not relabeled as analogies.",
+        "The unproven trigger is labeled inferred rather than verified.",
+        "Request coalescing is shown as the recovery mechanism.",
+        "The trace and failure lens expose the incident sequence interactively."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "请把 OAuth PKCE 做成交互式中文解释器；完成后的检查报告也请跟随我当前使用的中文，不要因为代码和来源是英文就切换语言。",
+      "expected_output": "A validated zh-CN concept explainer followed by a Chinese delivery report.",
+      "expectations": [
+        "The explainer spec uses zh-CN unless the user explicitly requests another artifact language.",
+        "The final QA and delivery report is written in Chinese.",
+        "Commands, file paths, identifiers, and exact source titles remain precise rather than being forcibly translated.",
+        "The report distinguishes generated artifacts from browser-checked and destination-verified state."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Explain a repository request path visually. The code comments are Chinese, but keep the explainer and the final verification report in the language I am using here.",
+      "expected_output": "A validated English module explainer followed by an English delivery report.",
+      "expectations": [
+        "The artifact and final report follow the user's English interaction language.",
+        "Chinese source text is quoted or paraphrased without fabricating an English source quote.",
+        "The final report names the generated spec and HTML paths and lists only checks that actually ran."
+      ]
+    }
+  ]
+}

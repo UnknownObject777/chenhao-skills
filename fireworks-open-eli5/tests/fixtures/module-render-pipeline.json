@@ -1,0 +1,260 @@
+{
+  "version": 1,
+  "language": "en",
+  "mode": "module",
+  "modeData": {
+    "entryNodeId": "story-spec",
+    "outputNodeIds": [
+      "generated-state"
+    ],
+    "sourceEvidenceIds": [
+      "validator-source",
+      "renderer-source",
+      "template-source"
+    ]
+  },
+  "title": "How one spec becomes a verified explainer",
+  "summary": "Follow a JSON story through validation, deterministic rendering, and local artifact checks.",
+  "truthLadder": {
+    "analogy": "Think of the spec as a stage script: validation checks the cast list, and rendering performs the same script the same way every time.",
+    "technical": "The validator resolves IDs and evidence references before render.mjs hashes the canonical JSON, escapes text, injects semantic content into a fixed template, and validates the resulting HTML.",
+    "caveat": "This pipeline verifies structure, offline boundaries, and deterministic output; it does not prove that every source claim is factually correct."
+  },
+  "scenes": [
+    {
+      "id": "validate-input",
+      "title": "Reject broken stories before layout",
+      "summary": "The JSON spec enters a strict structural and reference-integrity gate.",
+      "evidence": [
+        "validator-source",
+        "stage-analogy"
+      ],
+      "nodes": [
+        {
+          "id": "story-spec",
+          "kind": "actor",
+          "label": "Version 1 spec",
+          "detail": "Carries scenes, nodes, trace steps, sources, and teaching prompts.",
+          "evidence": [
+            "validator-source",
+            "stage-analogy"
+          ]
+        },
+        {
+          "id": "spec-validator",
+          "kind": "decision",
+          "label": "Spec validator",
+          "detail": "Rejects invalid modes, duplicate IDs, unsafe URLs, and broken references.",
+          "evidence": [
+            "validator-source"
+          ],
+          "failure": {
+            "impact": "No HTML is generated",
+            "symptom": "The command exits nonzero with path-specific errors",
+            "fallback": "Correct the spec and rerun validation"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "submit-spec",
+          "from": "story-spec",
+          "to": "spec-validator",
+          "label": "validate"
+        }
+      ]
+    },
+    {
+      "id": "render-content",
+      "title": "Bind trusted structure to a fixed shell",
+      "summary": "Only a valid spec reaches the renderer and its offline HTML template.",
+      "evidence": [
+        "renderer-source",
+        "template-source"
+      ],
+      "nodes": [
+        {
+          "id": "valid-spec",
+          "kind": "event",
+          "label": "Validated data",
+          "detail": "The renderer receives a structure whose required references resolve.",
+          "evidence": [
+            "validator-source"
+          ]
+        },
+        {
+          "id": "deterministic-renderer",
+          "kind": "process",
+          "label": "Renderer",
+          "detail": "Hashes canonical JSON, escapes text, and builds semantic content.",
+          "evidence": [
+            "renderer-source"
+          ]
+        },
+        {
+          "id": "offline-template",
+          "kind": "store",
+          "label": "HTML shell",
+          "detail": "Provides the visual system, controls, CSP, and responsive layout.",
+          "evidence": [
+            "template-source"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "render-data",
+          "from": "valid-spec",
+          "to": "deterministic-renderer",
+          "label": "render"
+        },
+        {
+          "id": "apply-shell",
+          "from": "deterministic-renderer",
+          "to": "offline-template",
+          "label": "inject safely"
+        }
+      ]
+    },
+    {
+      "id": "verify-output",
+      "title": "Check the artifact before handoff",
+      "summary": "The generated file is validated again and remains a local artifact until separately delivered.",
+      "evidence": [
+        "validator-source",
+        "renderer-source"
+      ],
+      "nodes": [
+        {
+          "id": "html-artifact",
+          "kind": "store",
+          "label": "Single HTML file",
+          "detail": "Contains the rendered story, inline SVG logic, styles, and embedded spec.",
+          "evidence": [
+            "renderer-source"
+          ]
+        },
+        {
+          "id": "html-validator",
+          "kind": "decision",
+          "label": "HTML validator",
+          "detail": "Checks required metadata and rejects external or unsafe runtime primitives.",
+          "evidence": [
+            "validator-source"
+          ],
+          "failure": {
+            "impact": "The artifact is not ready for local handoff",
+            "symptom": "Validation reports a forbidden construct or missing invariant",
+            "fallback": "Fix the renderer or template, then regenerate from the same spec"
+          }
+        },
+        {
+          "id": "generated-state",
+          "kind": "event",
+          "label": "Generated",
+          "detail": "The file is locally verified, but not published or destination-verified.",
+          "evidence": [
+            "renderer-source"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "check-html",
+          "from": "html-artifact",
+          "to": "html-validator",
+          "label": "inspect"
+        },
+        {
+          "id": "mark-generated",
+          "from": "html-validator",
+          "to": "generated-state",
+          "label": "pass"
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "nodeId": "story-spec",
+      "label": "Load the version 1 JSON story"
+    },
+    {
+      "nodeId": "spec-validator",
+      "label": "Resolve IDs, evidence, and safety constraints"
+    },
+    {
+      "nodeId": "valid-spec",
+      "label": "Pass validated data to the renderer"
+    },
+    {
+      "nodeId": "deterministic-renderer",
+      "label": "Hash and escape the canonical input"
+    },
+    {
+      "nodeId": "offline-template",
+      "label": "Bind the story to the offline shell"
+    },
+    {
+      "nodeId": "html-artifact",
+      "label": "Write one portable HTML file"
+    },
+    {
+      "nodeId": "html-validator",
+      "label": "Check the artifact boundary"
+    },
+    {
+      "nodeId": "generated-state",
+      "label": "Report generated, not published"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Canonical JSON",
+      "definition": "The exact JSON serialization used as deterministic hash input."
+    },
+    {
+      "term": "CSP",
+      "definition": "A browser policy that restricts which scripts, styles, connections, and resources may run."
+    }
+  ],
+  "teachBack": [
+    {
+      "question": "Why does validation run before and after rendering?",
+      "answer": "The first pass checks the story contract; the second checks that the produced HTML still obeys its offline and safety invariants."
+    },
+    {
+      "question": "Does a passing local artifact count as published?",
+      "answer": "No. It is only generated and locally verified until a separate destination workflow publishes and reads it back."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "validator-source",
+      "status": "verified",
+      "label": "Bundled validator implementation",
+      "note": "Directly supports the stated structure, reference, URL, and HTML checks.",
+      "path": "scripts/validate.mjs"
+    },
+    {
+      "id": "renderer-source",
+      "status": "verified",
+      "label": "Bundled deterministic renderer",
+      "note": "Directly supports hashing, escaping, template binding, and output validation behavior.",
+      "path": "scripts/render.mjs"
+    },
+    {
+      "id": "template-source",
+      "status": "verified",
+      "label": "Bundled offline HTML shell",
+      "note": "Directly supports the visual, interaction, responsive, and CSP claims.",
+      "path": "assets/explainer-shell.html"
+    },
+    {
+      "id": "stage-analogy",
+      "status": "analogy",
+      "label": "Stage-script analogy",
+      "note": "Only explains the division between a story spec, validation, and deterministic rendering."
+    }
+  ]
+}

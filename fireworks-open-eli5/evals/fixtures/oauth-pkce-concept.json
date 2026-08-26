@@ -1,0 +1,413 @@
+{
+  "version": 1,
+  "language": "zh-CN",
+  "mode": "concept",
+  "modeData": {
+    "intuitionSceneId": "ticket-intuition",
+    "mechanismSceneIds": [
+      "prepare-proof",
+      "authorize-user",
+      "exchange-code"
+    ],
+    "boundarySceneId": "interception-boundary"
+  },
+  "title": "OAuth 授权码 + PKCE：截获授权码为什么还不够",
+  "summary": "跟随一次公共客户端登录，拆开 verifier、S256 challenge、授权码回调与 token 端校验。",
+  "truthLadder": {
+    "analogy": "授权码像一次性取货号，PKCE verifier 像只留在客户端手里的私密折痕；捡到号码的人没有同样折痕，仍取不走货物。",
+    "technical": "客户端先生成高熵 code_verifier，再发送其 S256 派生的 code_challenge。授权服务器把 challenge 绑定到授权码；兑换时只有能提交原始 verifier 且匹配 challenge 的客户端才能获得 access token。",
+    "caveat": "PKCE 主要缓解授权码拦截与注入风险，不替代精确 redirect URI 校验、TLS、客户端身份验证、最小权限、state 或 OpenID Connect nonce 等其他控制。"
+  },
+  "scenes": [
+    {
+      "id": "ticket-intuition",
+      "title": "先建立直觉：号码和私密折痕要同时对上",
+      "summary": "授权码可以经过浏览器回调，verifier 则只留在发起授权的客户端。",
+      "evidence": [
+        "ticket-analogy",
+        "rfc7636"
+      ],
+      "nodes": [
+        {
+          "id": "public-client",
+          "kind": "actor",
+          "label": "公共客户端",
+          "detail": "发起登录，但无法安全保管长期 client secret。",
+          "evidence": [
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "one-time-ticket",
+          "kind": "event",
+          "label": "一次性授权码",
+          "detail": "通过浏览器回调返回，之后用于换取 token。",
+          "evidence": [
+            "rfc6749",
+            "ticket-analogy"
+          ]
+        },
+        {
+          "id": "private-fold",
+          "kind": "store",
+          "label": "本地 verifier",
+          "detail": "只保留在客户端本地，稍后作为持有证明。",
+          "evidence": [
+            "rfc7636",
+            "ticket-analogy"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "start-ticket",
+          "from": "public-client",
+          "to": "one-time-ticket",
+          "label": "请求一次性号码"
+        },
+        {
+          "id": "keep-fold",
+          "from": "public-client",
+          "to": "private-fold",
+          "label": "本地保留秘密"
+        }
+      ]
+    },
+    {
+      "id": "prepare-proof",
+      "title": "第一步：先造 verifier，再公开 challenge",
+      "summary": "每次授权请求都生成新的随机 verifier，并用 S256 计算可公开发送的 challenge。",
+      "evidence": [
+        "rfc7636",
+        "rfc9700"
+      ],
+      "nodes": [
+        {
+          "id": "random-generator",
+          "kind": "process",
+          "label": "安全随机生成器",
+          "detail": "为本次授权生成唯一且难猜的 code_verifier。",
+          "evidence": [
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "code-verifier",
+          "kind": "store",
+          "label": "code_verifier",
+          "detail": "高熵随机字符串，不随授权请求发送。",
+          "evidence": [
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "s256-challenge",
+          "kind": "process",
+          "label": "S256 challenge",
+          "detail": "对 verifier 做 SHA-256，再用无填充的 Base64url 编码。",
+          "evidence": [
+            "rfc7636",
+            "rfc9700"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "generate-verifier",
+          "from": "random-generator",
+          "to": "code-verifier",
+          "label": "每次生成"
+        },
+        {
+          "id": "derive-challenge",
+          "from": "code-verifier",
+          "to": "s256-challenge",
+          "label": "S256 派生"
+        }
+      ]
+    },
+    {
+      "id": "authorize-user",
+      "title": "第二步：浏览器只带 challenge 去授权",
+      "summary": "用户在授权端点完成认证与同意，服务器将 challenge 与随后签发的授权码关联。",
+      "evidence": [
+        "rfc6749",
+        "rfc7636",
+        "rfc9700"
+      ],
+      "nodes": [
+        {
+          "id": "user-agent",
+          "kind": "actor",
+          "label": "浏览器",
+          "detail": "携带 client_id、redirect_uri、challenge 与 method 前往授权端点。",
+          "evidence": [
+            "rfc6749",
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "authorization-server",
+          "kind": "decision",
+          "label": "授权服务器",
+          "detail": "认证用户、取得授权，并把 challenge 绑定到本次授权码。",
+          "evidence": [
+            "rfc6749",
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "redirected-code",
+          "kind": "event",
+          "label": "回调中的授权码",
+          "detail": "经已注册且精确匹配的 redirect URI 返回客户端。",
+          "evidence": [
+            "rfc6749",
+            "rfc9700"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "send-challenge",
+          "from": "user-agent",
+          "to": "authorization-server",
+          "label": "发送 challenge"
+        },
+        {
+          "id": "return-code",
+          "from": "authorization-server",
+          "to": "redirected-code",
+          "label": "签发授权码"
+        }
+      ]
+    },
+    {
+      "id": "exchange-code",
+      "title": "第三步：token 端要求原始 verifier",
+      "summary": "客户端把授权码和本地 verifier 一起提交；服务器重新计算并比较 challenge。",
+      "evidence": [
+        "rfc7636",
+        "rfc9700"
+      ],
+      "nodes": [
+        {
+          "id": "token-request",
+          "kind": "actor",
+          "label": "客户端 token 请求",
+          "detail": "提交 authorization code、redirect_uri 与原始 code_verifier。",
+          "evidence": [
+            "rfc6749",
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "verifier-check",
+          "kind": "decision",
+          "label": "token 端核验",
+          "detail": "按记录的方法派生 challenge，并与授权阶段绑定值比较。",
+          "evidence": [
+            "rfc7636"
+          ],
+          "failure": {
+            "impact": "授权码不能兑换为 access token",
+            "symptom": "verifier 缺失、错误或派生值不匹配",
+            "fallback": "终止本次流程，重新发起带全新 verifier 的授权"
+          }
+        },
+        {
+          "id": "access-token",
+          "kind": "event",
+          "label": "access token",
+          "detail": "只有授权码有效且 verifier 匹配时才签发。",
+          "evidence": [
+            "rfc6749",
+            "rfc7636"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "submit-proof",
+          "from": "token-request",
+          "to": "verifier-check",
+          "label": "提交 code + verifier"
+        },
+        {
+          "id": "issue-token",
+          "from": "verifier-check",
+          "to": "access-token",
+          "label": "匹配后签发"
+        }
+      ]
+    },
+    {
+      "id": "interception-boundary",
+      "title": "边界：拦到 code 的攻击者缺少 verifier",
+      "summary": "PKCE 让被截获的授权码缺少兑换所需的第二份、请求级证明。",
+      "evidence": [
+        "rfc7636",
+        "rfc9700"
+      ],
+      "nodes": [
+        {
+          "id": "code-interceptor",
+          "kind": "actor",
+          "label": "授权码拦截者",
+          "detail": "看见回调中的授权码，却没有客户端本地的 verifier。",
+          "evidence": [
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "stolen-code",
+          "kind": "event",
+          "label": "被截获的 code",
+          "detail": "单独持有授权码，不足以通过 PKCE token 端核验。",
+          "evidence": [
+            "rfc7636"
+          ]
+        },
+        {
+          "id": "exchange-denied",
+          "kind": "decision",
+          "label": "兑换被拒绝",
+          "detail": "无法提供匹配 verifier，服务器不签发 access token。",
+          "evidence": [
+            "rfc7636"
+          ],
+          "failure": {
+            "impact": "攻击者不能仅凭截获的授权码取得 token",
+            "symptom": "token 请求缺少或提交错误 verifier",
+            "fallback": "合法客户端用自己的 verifier 完成兑换，或重新发起授权"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "intercept-code",
+          "from": "code-interceptor",
+          "to": "stolen-code",
+          "label": "截获"
+        },
+        {
+          "id": "fail-proof",
+          "from": "stolen-code",
+          "to": "exchange-denied",
+          "label": "缺少 verifier"
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "nodeId": "public-client",
+      "label": "公共客户端开始一次新的授权"
+    },
+    {
+      "nodeId": "random-generator",
+      "label": "安全随机生成器创建唯一 verifier"
+    },
+    {
+      "nodeId": "code-verifier",
+      "label": "客户端把 verifier 留在本地"
+    },
+    {
+      "nodeId": "s256-challenge",
+      "label": "客户端计算可公开发送的 S256 challenge"
+    },
+    {
+      "nodeId": "user-agent",
+      "label": "浏览器携带 challenge 前往授权端点"
+    },
+    {
+      "nodeId": "authorization-server",
+      "label": "服务器认证用户并记录 challenge"
+    },
+    {
+      "nodeId": "redirected-code",
+      "label": "授权码通过已注册回调返回"
+    },
+    {
+      "nodeId": "token-request",
+      "label": "客户端提交授权码和本地 verifier"
+    },
+    {
+      "nodeId": "verifier-check",
+      "label": "token 端重新派生并比较 challenge"
+    },
+    {
+      "nodeId": "access-token",
+      "label": "匹配成功后才签发 access token"
+    },
+    {
+      "nodeId": "code-interceptor",
+      "label": "攻击者只能看到被截获的授权码"
+    },
+    {
+      "nodeId": "exchange-denied",
+      "label": "缺少 verifier 的兑换请求被拒绝"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "code_verifier",
+      "definition": "客户端为每次授权生成并保留的高熵随机字符串，长度为 43 到 128 个未保留字符。"
+    },
+    {
+      "term": "code_challenge",
+      "definition": "由 verifier 派生、随授权请求发送，并与授权码关联的比较值。"
+    },
+    {
+      "term": "S256",
+      "definition": "对 verifier 做 SHA-256，再以无填充 Base64url 编码的 PKCE challenge 方法。"
+    },
+    {
+      "term": "公共客户端",
+      "definition": "无法可靠保守长期客户端凭据的 OAuth 客户端，例如分发到用户设备的应用。"
+    }
+  ],
+  "teachBack": [
+    {
+      "question": "为什么攻击者拿到 authorization code 仍不一定能换到 token？",
+      "answer": "因为 token 端还要求本次授权对应的原始 verifier，并将其派生值与授权阶段绑定的 challenge 比较。"
+    },
+    {
+      "question": "为什么不能在每次授权中重复使用同一个 verifier？",
+      "answer": "PKCE 要求每个授权请求生成新的、难猜的 verifier；复用会削弱请求之间的隔离和持有证明。"
+    },
+    {
+      "question": "接入 PKCE 后，还能省略 redirect URI 精确校验或 TLS 吗？",
+      "answer": "不能。PKCE 只解决特定的授权码拦截与注入风险，其他 OAuth 安全边界仍需独立落实。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "rfc6749",
+      "status": "verified",
+      "label": "RFC 6749 OAuth 2.0 Authorization Framework",
+      "note": "定义授权码流程、授权端点、token 端点和 redirect URI 等基础角色与交换。",
+      "url": "https://www.rfc-editor.org/rfc/rfc6749"
+    },
+    {
+      "id": "rfc7636",
+      "status": "verified",
+      "label": "RFC 7636 Proof Key for Code Exchange",
+      "note": "定义 verifier、challenge、S256、授权码绑定与 token 端比较，用于缓解授权码拦截攻击。",
+      "url": "https://www.rfc-editor.org/rfc/rfc7636"
+    },
+    {
+      "id": "rfc9700",
+      "status": "verified",
+      "label": "RFC 9700 OAuth 2.0 Security Best Current Practice",
+      "note": "要求授权服务器支持 PKCE、公共客户端使用 PKCE，并保留 redirect URI 等其他安全控制。",
+      "url": "https://www.rfc-editor.org/rfc/rfc9700"
+    },
+    {
+      "id": "ticket-analogy",
+      "status": "analogy",
+      "label": "取货号与私密折痕类比",
+      "note": "只解释授权码与 verifier 的双重条件，不代表 OAuth 报文、信任模型或密码学细节。"
+    }
+  ]
+}

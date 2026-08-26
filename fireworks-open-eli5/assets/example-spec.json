@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "language": "zh-CN",
+  "mode": "concept",
+  "modeData": {
+    "intuitionSceneId": "ask",
+    "mechanismSceneIds": [
+      "resolve"
+    ],
+    "boundarySceneId": "connect"
+  },
+  "title": "DNS：互联网的通讯录",
+  "summary": "跟着一次网页请求，看域名如何变成服务器能理解的地址。",
+  "truthLadder": {
+    "analogy": "DNS 像通讯录：你记住朋友的名字，通讯录替你找到电话号码。",
+    "technical": "解析器按缓存、递归解析器、根与权威服务器的顺序查询，最终获得带有效期的资源记录。",
+    "caveat": "通讯录类比会隐藏缓存层、委派、多个记录类型，以及 DNS 回答不等于建立网络连接。"
+  },
+  "scenes": [
+    {
+      "id": "ask",
+      "title": "先问离你最近的记忆",
+      "summary": "浏览器和操作系统先检查缓存，避免每次都从头查询。",
+      "evidence": ["rfc1034"],
+      "nodes": [
+        {
+          "id": "browser",
+          "kind": "actor",
+          "label": "浏览器",
+          "detail": "请求 example.com 的地址",
+          "evidence": ["analogy-phonebook"]
+        },
+        {
+          "id": "cache",
+          "kind": "store",
+          "label": "本地缓存",
+          "detail": "保存仍在有效期内的答案",
+          "evidence": ["rfc1034"],
+          "failure": {
+            "impact": "需要发起完整的递归查询",
+            "symptom": "首次打开页面更慢",
+            "fallback": "向递归解析器查询"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "ask-cache",
+          "from": "browser",
+          "to": "cache",
+          "label": "有答案吗？"
+        }
+      ]
+    },
+    {
+      "id": "resolve",
+      "title": "沿着委派链找到负责人",
+      "summary": "递归解析器替用户询问根、顶级域和权威服务器。",
+      "nodes": [
+        {
+          "id": "resolver",
+          "kind": "process",
+          "label": "递归解析器",
+          "detail": "协调查询并缓存结果",
+          "evidence": ["rfc1034"],
+          "failure": {
+            "impact": "客户端无法获得新域名的地址",
+            "symptom": "出现 DNS 解析超时",
+            "fallback": "切换到另一台可信解析器"
+          }
+        },
+        {
+          "id": "root",
+          "kind": "decision",
+          "label": "根与顶级域",
+          "detail": "指出下一位负责人",
+          "evidence": ["rfc1034"]
+        },
+        {
+          "id": "authoritative",
+          "kind": "store",
+          "label": "权威服务器",
+          "detail": "给出域名的正式记录",
+          "evidence": ["rfc1034"]
+        }
+      ],
+      "edges": [
+        {
+          "id": "resolver-root",
+          "from": "resolver",
+          "to": "root",
+          "label": "谁负责？"
+        },
+        {
+          "id": "root-auth",
+          "from": "root",
+          "to": "authoritative",
+          "label": "去这里问"
+        }
+      ]
+    },
+    {
+      "id": "connect",
+      "title": "拿到地址，才开始连接",
+      "summary": "DNS 返回地址后，浏览器还要通过网络协议与服务器建立连接。",
+      "nodes": [
+        {
+          "id": "answer",
+          "kind": "event",
+          "label": "DNS 答案",
+          "detail": "IP 地址和缓存有效期",
+          "evidence": ["rfc1034"]
+        },
+        {
+          "id": "server",
+          "kind": "actor",
+          "label": "网站服务器",
+          "detail": "接收随后建立的网络连接",
+          "evidence": ["inference-connect"]
+        }
+      ],
+      "edges": [
+        {
+          "id": "answer-server",
+          "from": "answer",
+          "to": "server",
+          "label": "使用地址连接"
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "nodeId": "browser",
+      "label": "用户在浏览器输入域名"
+    },
+    {
+      "nodeId": "cache",
+      "label": "检查本地是否已有有效答案"
+    },
+    {
+      "nodeId": "resolver",
+      "label": "缓存未命中，递归解析器接手"
+    },
+    {
+      "nodeId": "root",
+      "label": "查询沿委派链前进"
+    },
+    {
+      "nodeId": "authoritative",
+      "label": "权威服务器返回记录"
+    },
+    {
+      "nodeId": "answer",
+      "label": "答案返回浏览器"
+    },
+    {
+      "nodeId": "server",
+      "label": "浏览器使用地址连接网站"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "解析器",
+      "definition": "代表客户端查询 DNS，并把答案缓存一段时间的服务。"
+    },
+    {
+      "term": "权威服务器",
+      "definition": "对某个 DNS 区域持有正式记录的服务器。"
+    },
+    {
+      "term": "TTL",
+      "definition": "答案可以在缓存中保留的时间。"
+    }
+  ],
+  "teachBack": [
+    {
+      "question": "为什么第二次打开同一网站通常不需要完整查询？",
+      "answer": "因为浏览器、操作系统或递归解析器可能仍缓存着未过期的答案。"
+    },
+    {
+      "question": "DNS 返回 IP 地址后，网页内容已经到达了吗？",
+      "answer": "没有。DNS 只完成寻址，浏览器还要建立连接并发送应用层请求。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "rfc1034",
+      "status": "verified",
+      "label": "RFC 1034 Domain Concepts and Facilities",
+      "note": "DNS 名称空间、解析器、名称服务器与缓存的基础规范。",
+      "url": "https://www.rfc-editor.org/rfc/rfc1034"
+    },
+    {
+      "id": "inference-connect",
+      "status": "inferred",
+      "label": "DNS 与后续连接的流程边界",
+      "note": "由网络协议分层关系推导出的教学表达。"
+    },
+    {
+      "id": "analogy-phonebook",
+      "status": "analogy",
+      "label": "通讯录类比",
+      "note": "仅用于建立名称到地址映射的直觉，不代表 DNS 的完整实现。"
+    }
+  ]
+}

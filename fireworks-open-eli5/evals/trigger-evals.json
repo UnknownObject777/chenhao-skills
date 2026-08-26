@@ -1,0 +1,82 @@
+[
+  {
+    "query": "用 ELI5 的方式把 OAuth 授权码流程做成一张可以点着看的图。",
+    "should_trigger": true
+  },
+  {
+    "query": "Explain this repository module visually, cite the files, and let me trace one request through it.",
+    "should_trigger": true
+  },
+  {
+    "query": "给我一个离线 HTML，逐步演示消息从生产者到 Kafka consumer 的路径。",
+    "should_trigger": true
+  },
+  {
+    "query": "Make an interactive incident timeline that shows where the outage propagated and what users observed.",
+    "should_trigger": true
+  },
+  {
+    "query": "比较 SSE 和 WebSocket，用同一个场景走两遍，并解释取舍。",
+    "should_trigger": true
+  },
+  {
+    "query": "画一张小白能懂但不失真的 DNS 工作原理图，最后测我三道题。",
+    "should_trigger": true
+  },
+  {
+    "query": "Show what happens when each component in this architecture fails.",
+    "should_trigger": true
+  },
+  {
+    "query": "把这份代码的调用链做成可播放的数据流解释器，并标注证据。",
+    "should_trigger": true
+  },
+  {
+    "query": "I need a truth-layered explainer: analogy first, implementation truth second, caveats last.",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a mobile-friendly visual walkthrough of our checkout request with source-backed claims.",
+    "should_trigger": true
+  },
+  {
+    "query": "用一句话解释什么是 DNS。",
+    "should_trigger": false
+  },
+  {
+    "query": "把这段中文改得更口语一点。",
+    "should_trigger": false
+  },
+  {
+    "query": "Build a marketing landing page for our DNS product.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review this pull request for security bugs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate a PNG logo showing a friendly network cloud.",
+    "should_trigger": false
+  },
+  {
+    "query": "What is the capital of France?",
+    "should_trigger": false
+  },
+  {
+    "query": "Summarize this incident report in five bullets.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a Mermaid diagram to the README.",
+    "should_trigger": false
+  },
+  {
+    "query": "Run the test suite and tell me which test failed.",
+    "should_trigger": false
+  },
+  {
+    "query": "Translate this API documentation into Chinese.",
+    "should_trigger": false
+  }
+]

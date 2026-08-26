@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "language": "en",
+  "mode": "incident",
+  "modeData": {
+    "normalSceneId": "normal-path",
+    "breakNodeId": "key-expiry",
+    "timeline": [
+      {
+        "marker": "Before",
+        "nodeId": "hot-cache-entry"
+      },
+      {
+        "marker": "T+0",
+        "nodeId": "key-expiry"
+      },
+      {
+        "marker": "T+0",
+        "nodeId": "origin-spike"
+      },
+      {
+        "marker": "T+4m",
+        "nodeId": "latency-alert"
+      },
+      {
+        "marker": "Recovery",
+        "nodeId": "request-coalescer"
+      },
+      {
+        "marker": "Restored",
+        "nodeId": "service-restored"
+      }
+    ],
+    "rootCauseEvidenceIds": [
+      "unproven-trigger"
+    ],
+    "recoveryNodeIds": [
+      "request-coalescer",
+      "service-restored"
+    ]
+  },
+  "title": "How one expired key became an 18x origin spike",
+  "summary": "Walk from the normal cache path through the stampede, delayed detection, and request-coalescing recovery.",
+  "truthLadder": {
+    "analogy": "A cache miss is like a shop running out of a popular item; without coordination, every customer asks the warehouse at once.",
+    "technical": "The observed key expiry removed the fast path, concurrent misses reached origin, origin QPS rose 18x, latency alerts fired four minutes later, and request coalescing restored service.",
+    "caveat": "The fixture does not prove what made the key simultaneously popular; that trigger remains inferred."
+  },
+  "scenes": [
+    {
+      "id": "normal-path",
+      "title": "Before the incident",
+      "summary": "Requests usually terminate at the hot cache entry instead of reaching origin.",
+      "evidence": [
+        "postmortem-fixture"
+      ],
+      "nodes": [
+        {
+          "id": "incoming-request",
+          "kind": "actor",
+          "label": "Incoming request",
+          "detail": "Asks for the popular object.",
+          "evidence": [
+            "postmortem-fixture",
+            "shop-analogy"
+          ]
+        },
+        {
+          "id": "hot-cache-entry",
+          "kind": "store",
+          "label": "Hot cache entry",
+          "detail": "Returns the object without origin work.",
+          "evidence": [
+            "postmortem-fixture"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "cache-hit",
+          "from": "incoming-request",
+          "to": "hot-cache-entry",
+          "label": "hit"
+        }
+      ]
+    },
+    {
+      "id": "break-propagation",
+      "title": "Expiry opens the floodgate",
+      "summary": "Many concurrent misses fan out to origin before a fresh value is available.",
+      "evidence": [
+        "postmortem-fixture",
+        "unproven-trigger"
+      ],
+      "nodes": [
+        {
+          "id": "key-expiry",
+          "kind": "event",
+          "label": "Popular key expires",
+          "detail": "The cached value is no longer usable.",
+          "evidence": [
+            "postmortem-fixture"
+          ],
+          "failure": {
+            "impact": "The cache no longer absorbs requests for this key",
+            "symptom": "Concurrent requests all observe a miss",
+            "fallback": "Coordinate one refresh and let peers wait or serve stale data"
+          }
+        },
+        {
+          "id": "concurrent-misses",
+          "kind": "process",
+          "label": "Misses fan out",
+          "detail": "Requests independently ask origin for the same object.",
+          "evidence": [
+            "unproven-trigger"
+          ]
+        },
+        {
+          "id": "origin-spike",
+          "kind": "event",
+          "label": "Origin reaches 18x QPS",
+          "detail": "The downstream service receives the amplified load.",
+          "evidence": [
+            "postmortem-fixture"
+          ],
+          "failure": {
+            "impact": "Origin capacity is consumed by duplicate work",
+            "symptom": "Latency rises while QPS is 18 times the prior level",
+            "fallback": "Coalesce duplicate requests and restore the cache path"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "expiry-to-misses",
+          "from": "key-expiry",
+          "to": "concurrent-misses",
+          "label": "causes misses"
+        },
+        {
+          "id": "misses-to-origin",
+          "from": "concurrent-misses",
+          "to": "origin-spike",
+          "label": "amplify"
+        }
+      ]
+    },
+    {
+      "id": "detect-recover",
+      "title": "Detection arrives, then coordination restores service",
+      "summary": "The alert lags the load spike; request coalescing removes duplicate origin work.",
+      "evidence": [
+        "postmortem-fixture"
+      ],
+      "nodes": [
+        {
+          "id": "latency-alert",
+          "kind": "event",
+          "label": "Latency alert at +4 min",
+          "detail": "Monitoring surfaces user-visible degradation four minutes after the QPS rise.",
+          "evidence": [
+            "postmortem-fixture"
+          ]
+        },
+        {
+          "id": "request-coalescer",
+          "kind": "process",
+          "label": "Request coalescing",
+          "detail": "One refresh proceeds while equivalent requests share its result.",
+          "evidence": [
+            "postmortem-fixture"
+          ]
+        },
+        {
+          "id": "service-restored",
+          "kind": "event",
+          "label": "Service restored",
+          "detail": "Duplicate origin work falls and the cache path recovers.",
+          "evidence": [
+            "postmortem-fixture"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "alert-to-mitigation",
+          "from": "latency-alert",
+          "to": "request-coalescer",
+          "label": "triggers response"
+        },
+        {
+          "id": "mitigation-to-recovery",
+          "from": "request-coalescer",
+          "to": "service-restored",
+          "label": "deduplicates"
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "nodeId": "incoming-request",
+      "label": "A request normally looks for the cached object"
+    },
+    {
+      "nodeId": "hot-cache-entry",
+      "label": "The hot entry usually answers without origin work"
+    },
+    {
+      "nodeId": "key-expiry",
+      "label": "The popular entry expires"
+    },
+    {
+      "nodeId": "concurrent-misses",
+      "label": "Concurrent requests miss together"
+    },
+    {
+      "nodeId": "origin-spike",
+      "label": "Duplicate work drives origin QPS to 18x"
+    },
+    {
+      "nodeId": "latency-alert",
+      "label": "Latency monitoring fires four minutes later"
+    },
+    {
+      "nodeId": "request-coalescer",
+      "label": "Equivalent refreshes are coalesced"
+    },
+    {
+      "nodeId": "service-restored",
+      "label": "The cache path and service recover"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Cache stampede",
+      "definition": "Many requests miss the same cache entry and create duplicate downstream work."
+    },
+    {
+      "term": "Request coalescing",
+      "definition": "Combining equivalent in-flight requests so that one refresh supplies multiple waiters."
+    }
+  ],
+  "teachBack": [
+    {
+      "question": "Why did a single key expiry affect origin QPS?",
+      "answer": "Concurrent requests missed the same entry and independently created duplicate origin work."
+    },
+    {
+      "question": "Which part of this incident is still uncertain?",
+      "answer": "The trigger that made the key simultaneously hot is inferred; the fixture does not prove it."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "postmortem-fixture",
+      "status": "verified",
+      "label": "Synthetic postmortem input fixture",
+      "note": "Directly supports the expiry, 18x QPS, four-minute alert lag, and coalescing recovery claims within this test.",
+      "path": "tests/fixtures/cache-stampede-evidence.md"
+    },
+    {
+      "id": "unproven-trigger",
+      "status": "inferred",
+      "label": "Simultaneous popularity trigger",
+      "note": "The input says this trigger remains unproven, so the explainer labels it inferred."
+    },
+    {
+      "id": "shop-analogy",
+      "status": "analogy",
+      "label": "Shop and warehouse analogy",
+      "note": "Only illustrates duplicate demand; it does not describe the cache implementation."
+    }
+  ]
+}

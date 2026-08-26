@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "language": "en",
+  "mode": "tradeoff",
+  "modeData": {
+    "sharedGoalSceneId": "shared-goal",
+    "criteria": [
+      {
+        "id": "downstream",
+        "label": "Server-to-client updates"
+      },
+      {
+        "id": "upstream",
+        "label": "Client-to-server messages"
+      },
+      {
+        "id": "reconnect",
+        "label": "Reconnect model"
+      }
+    ],
+    "options": [
+      {
+        "id": "sse",
+        "label": "Server-Sent Events",
+        "sceneId": "sse-option",
+        "ratings": [
+          {
+            "criterionId": "downstream",
+            "fit": "strong",
+            "note": "Directly matches a mostly downstream event stream."
+          },
+          {
+            "criterionId": "upstream",
+            "fit": "weak",
+            "note": "Client messages need a separate HTTP request path."
+          },
+          {
+            "criterionId": "reconnect",
+            "fit": "strong",
+            "note": "EventSource defines reconnect behavior and supports event IDs."
+          }
+        ]
+      },
+      {
+        "id": "websocket",
+        "label": "WebSocket",
+        "sceneId": "websocket-option",
+        "ratings": [
+          {
+            "criterionId": "downstream",
+            "fit": "strong",
+            "note": "Framed messages can carry the same status updates."
+          },
+          {
+            "criterionId": "upstream",
+            "fit": "strong",
+            "note": "The same connection supports frequent client messages."
+          },
+          {
+            "criterionId": "reconnect",
+            "fit": "mixed",
+            "note": "The application must define reconnect, resubscribe, and replay behavior."
+          }
+        ]
+      }
+    ],
+    "decisionRule": "Prefer SSE when updates are mostly downstream and its HTTP path fits the infrastructure; choose WebSocket when a durable bidirectional session is part of the product need."
+  },
+  "title": "SSE or WebSocket for a status stream?",
+  "summary": "Trace the same reconnecting status client through two transport choices and choose by interaction shape.",
+  "truthLadder": {
+    "analogy": "SSE is like a live radio station from server to listener; WebSocket is more like an open phone call where either side can speak.",
+    "technical": "EventSource receives server-sent events over HTTP with defined reconnect behavior, while WebSocket establishes a bidirectional framed protocol after its opening handshake.",
+    "caveat": "Proxies, authentication, browser limits, backpressure, infrastructure, and library behavior can outweigh the protocol-level distinction."
+  },
+  "scenes": [
+    {
+      "id": "shared-goal",
+      "title": "Start with the same product need",
+      "summary": "A browser needs timely job-status updates and must recover after a network break.",
+      "evidence": [
+        "scenario-inference"
+      ],
+      "nodes": [
+        {
+          "id": "status-service",
+          "kind": "actor",
+          "label": "Status service",
+          "detail": "Emits progress changes for long-running work.",
+          "evidence": [
+            "scenario-inference"
+          ]
+        },
+        {
+          "id": "reconnecting-client",
+          "kind": "actor",
+          "label": "Browser client",
+          "detail": "Needs mostly server-to-client updates and reconnect recovery.",
+          "evidence": [
+            "scenario-inference"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "deliver-status",
+          "from": "status-service",
+          "to": "reconnecting-client",
+          "label": "send updates"
+        }
+      ]
+    },
+    {
+      "id": "sse-option",
+      "title": "Option A: Server-Sent Events",
+      "summary": "Use the browser EventSource model when the dominant path is server to client.",
+      "evidence": [
+        "html-sse",
+        "transport-analogy"
+      ],
+      "nodes": [
+        {
+          "id": "sse-endpoint",
+          "kind": "process",
+          "label": "SSE endpoint",
+          "detail": "Streams text event records over an HTTP response.",
+          "evidence": [
+            "html-sse",
+            "transport-analogy"
+          ],
+          "failure": {
+            "impact": "Updates pause until the stream reconnects",
+            "symptom": "The client observes an error and stops receiving events",
+            "fallback": "Let EventSource reconnect and resume with an event ID when supported"
+          }
+        },
+        {
+          "id": "event-source",
+          "kind": "actor",
+          "label": "EventSource client",
+          "detail": "Receives named events and applies the reconnect model.",
+          "evidence": [
+            "html-sse"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "sse-stream",
+          "from": "sse-endpoint",
+          "to": "event-source",
+          "label": "one-way stream"
+        }
+      ]
+    },
+    {
+      "id": "websocket-option",
+      "title": "Option B: WebSocket",
+      "summary": "Use a bidirectional channel when the client also needs frequent low-latency messages.",
+      "evidence": [
+        "rfc6455",
+        "transport-analogy"
+      ],
+      "nodes": [
+        {
+          "id": "websocket-server",
+          "kind": "process",
+          "label": "WebSocket server",
+          "detail": "Accepts the opening handshake and exchanges framed messages.",
+          "evidence": [
+            "rfc6455",
+            "transport-analogy"
+          ],
+          "failure": {
+            "impact": "Both directions lose the live channel",
+            "symptom": "The connection closes or stops delivering frames",
+            "fallback": "Use application-defined reconnect, resubscribe, and replay logic"
+          }
+        },
+        {
+          "id": "websocket-client",
+          "kind": "actor",
+          "label": "WebSocket client",
+          "detail": "Can send commands and receive status on the same connection.",
+          "evidence": [
+            "rfc6455"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "duplex-channel",
+          "from": "websocket-server",
+          "to": "websocket-client",
+          "label": "two-way frames"
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "nodeId": "status-service",
+      "label": "A job progress value changes"
+    },
+    {
+      "nodeId": "reconnecting-client",
+      "label": "The browser needs the update after a reconnect"
+    },
+    {
+      "nodeId": "sse-endpoint",
+      "label": "SSE encodes the update as an event stream record"
+    },
+    {
+      "nodeId": "event-source",
+      "label": "EventSource receives it and owns protocol-defined reconnect behavior"
+    },
+    {
+      "nodeId": "websocket-server",
+      "label": "WebSocket sends the same status as an application message"
+    },
+    {
+      "nodeId": "websocket-client",
+      "label": "The client can also send messages on the same channel"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Unidirectional",
+      "definition": "The application data in this channel primarily travels from server to client."
+    },
+    {
+      "term": "Bidirectional",
+      "definition": "Both endpoints can send application messages over the established channel."
+    }
+  ],
+  "teachBack": [
+    {
+      "question": "Which option is the default fit for mostly server-to-client status updates?",
+      "answer": "SSE is often the simpler fit when HTTP streaming and its reconnect model meet the infrastructure and product constraints."
+    },
+    {
+      "question": "When does WebSocket earn its added application lifecycle work?",
+      "answer": "When frequent low-latency messages must flow in both directions or the product already needs a bidirectional session."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "html-sse",
+      "status": "verified",
+      "label": "WHATWG Server-Sent Events",
+      "note": "Defines EventSource processing, event streams, and reconnection behavior.",
+      "url": "https://html.spec.whatwg.org/multipage/server-sent-events.html"
+    },
+    {
+      "id": "rfc6455",
+      "status": "verified",
+      "label": "RFC 6455 The WebSocket Protocol",
+      "note": "Defines the WebSocket opening handshake and framed bidirectional protocol.",
+      "url": "https://www.rfc-editor.org/rfc/rfc6455"
+    },
+    {
+      "id": "scenario-inference",
+      "status": "inferred",
+      "label": "Shared status-stream scenario",
+      "note": "The decision framing follows from the stated product need; it is not a universal protocol benchmark."
+    },
+    {
+      "id": "transport-analogy",
+      "status": "analogy",
+      "label": "Radio and phone-call analogy",
+      "note": "Only communicates directionality; it does not model transport framing, reconnection, or infrastructure."
+    }
+  ]
+}

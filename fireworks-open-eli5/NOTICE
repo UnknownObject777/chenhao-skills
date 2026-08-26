@@ -1,0 +1,13 @@
+Fireworks Open ELI5
+Copyright 2026 Brad Zhang and contributors
+
+This independent implementation was inspired by the Anthropic community
+`eli5` skill:
+https://github.com/anthropics/claude-plugins-community/tree/main/eli5
+
+No source code from that skill is required at runtime. This project is not
+affiliated with, sponsored by, or endorsed by Anthropic.
+
+The owl identity was created with the open `ip-as-logo` art-direction workflow:
+https://github.com/s1dashu/ip-as-logo-skill
+Copyright (c) 2026 s1dashu. The workflow is available under the MIT License.
