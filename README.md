@@ -13,6 +13,7 @@
 - [skill-doctor](skill-doctor/SKILL.md) — 用效率与代码质量评分规约给仓库的 agent skills 打分，并起草具体的技能修改建议。
 - [thermo-nuclear-code-quality-review](thermo-nuclear-code-quality-review/SKILL.md) — 极严格的可维护性审查：抽象质量、巨型文件、面条式条件膨胀。
 - [unslop](unslop/SKILL.md) — 剔除任何文字里的 AI 腔痕迹。
+- [unslop-zh](unslop-zh/SKILL.md) — unslop 的中文版：剪掉中文写作里的 AI 腔并补回人味，词表与误报边界参考 92-humanizer。
 - [dsh-archive-agent-notes](dsh-archive-agent-notes/SKILL.md) — 新增/审计/归档/恢复 DeepSeek Harness 的 Agent Notes，按未来决策价值分类并清理已被取代的记录。
 - [dsh-code-review](dsh-code-review/SKILL.md) — 按仓库的 AGENTS.md 规范、防御性模式和质检门槛审查 deepseek-harness 的 PR。
 - [dsh-doc-site-sync](dsh-doc-site-sync/SKILL.md) — 发布/更新/移动/删除 DeepSeek Harness 文档站页面，排查 VitePress 投影问题。
