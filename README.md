@@ -8,6 +8,11 @@
 - [chrome-bookmark-reorganize](chrome-bookmark-reorganize/SKILL.md) — 重新分类/整理 Chrome 书签，处理本地 Bookmarks 文件与 Google 同步冲突。
 - [eli5](eli5/SKILL.md) — 用大白话解释研究、论文或技术概念：去术语、给类比、给清晰结论。
 - [fireworks-open-eli5](fireworks-open-eli5/SKILL.md) — 把概念、代码模块、工程权衡或事故做成有据可依的交互式可视化讲解页（自包含离线 HTML，证据先于美观）。
+- [retro](retro/SKILL.md) — 对一段编码会话做复盘回顾。
+- [show-me](show-me/SKILL.md) — 用简洁图示、代码结构草图和聚焦的 HTML 工件帮你可视化地理解当前主题。
+- [skill-doctor](skill-doctor/SKILL.md) — 用效率与代码质量评分规约给仓库的 agent skills 打分，并起草具体的技能修改建议。
+- [thermo-nuclear-code-quality-review](thermo-nuclear-code-quality-review/SKILL.md) — 极严格的可维护性审查：抽象质量、巨型文件、面条式条件膨胀。
+- [unslop](unslop/SKILL.md) — 剔除任何文字里的 AI 腔痕迹。
 - [dsh-archive-agent-notes](dsh-archive-agent-notes/SKILL.md) — 新增/审计/归档/恢复 DeepSeek Harness 的 Agent Notes，按未来决策价值分类并清理已被取代的记录。
 - [dsh-code-review](dsh-code-review/SKILL.md) — 按仓库的 AGENTS.md 规范、防御性模式和质检门槛审查 deepseek-harness 的 PR。
 - [dsh-doc-site-sync](dsh-doc-site-sync/SKILL.md) — 发布/更新/移动/删除 DeepSeek Harness 文档站页面，排查 VitePress 投影问题。
