@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>一台 Agent 运行时的安全观</title>
+<meta name="description" content="当它敢在你的机器上跑命令、连网络、带着你的凭据，它凭什么值得被信任。这里是三章样张，完整版三十二章精读 openai/codex，每一处论断都能回溯到源码的具体某一行。">
+<meta name="author" content="洛小山">
+<style>:root{--accent:#3f4a5a}</style>
+<link rel="stylesheet" href="assets/book.css">
+
+</head>
+<body class="is-cover">
+<div class="progress"><i></i></div>
+
+<main class="cover">
+  <section class="cover-hero">
+    <p class="kicker">源码精读 · 三章样张</p>
+    <h1>一台 Agent 运行时的安全观</h1>
+    <p class="sub">当它敢在你的机器上跑命令、连网络、带着你的凭据，它凭什么值得被信任。这里是三章样张，完整版三十二章精读 openai/codex，每一处论断都能回溯到源码的具体某一行。</p>
+    <p class="by">洛小山</p>
+    <div class="stats"><div class="stat"><b data-count="3">0</b><span>章</span></div><div class="stat"><b data-count="124">0</b><span>处源码引用</span></div><div class="stat"><b data-count="1.9">0</b><span>万字</span></div></div>
+    <p class="anchor">commit 4f39251a01 · tag course-anchor-20260822 · 2026-08-22</p>
+    <a class="src-repo" href="https://github.com/openai/codex" target="_blank" rel="noopener">github.com/openai/codex</a>
+    <a class="start" href="ch-01.html">开始阅读</a>
+  </section>
+  <section class="cover-toc reveal">
+    <h2>目录</h2>
+    <ol class="toc"><li><a href="ch-01.html"><span class="n">01</span><span class="t">crate 治理，一条不许往核心加代码的禁令</span><span class="d">你要给这台 agent 加一个小功能：每轮对话开头把当前 git 分支名写进模型上下文。</span></a></li><li><a href="ch-02.html"><span class="n">02</span><span class="t">三层 Turn Loop，任务壳、轮次、采样</span><span class="d">你让 coding agent 改一个函数。屏幕上这是一轮对话：你说了一句，它忙了一阵，最后回「改完了」。</span></a></li><li><a href="ch-03.html"><span class="n">03</span><span class="t">SSE 驱动的工具闭环，流内建 future，流后统一 drain</span><span class="d">你让 Codex 读三个文件再写一份摘要。屏幕上模型还在打字：「我先看 src/main.rs…」下一秒，终端里已经响起了第一次读文件的声音。</span></a></li></ol>
+    <a class="colophon-link" href="colophon.html">关于这本书</a>
+  </section>
+</main>
+
+<footer class="book-foot"><span>来自 <a href="https://github.com/itshen/source-reading-methodology" target="_blank" rel="noopener">洛小山·小山学堂方法论</a></span><a class="foot-repo" href="https://github.com/itshen/source-reading-methodology" target="_blank" rel="noopener">github.com/itshen/source-reading-methodology</a></footer>
+<script src="assets/book.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "title": "一台 Agent 运行时的安全观",
+  "subtitle": "当它敢在你的机器上跑命令、连网络、带着你的凭据，它凭什么值得被信任。三十二章逐行精读，每一处论断都能回溯到源码的具体某一行。",
+  "kicker": "源码精读",
+  "author": "你的名字",
+  "repo": "https://github.com/openai/codex",
+  "anchor": {
+    "commit": "4f39251a01",
+    "tag": "course-anchor-20260822",
+    "date": "2026-08-22"
+  },
+  "accent": "#3f4a5a",
+  "lang": "zh-CN",
+  "chapters": "chapters",
+  "out": "dist"
+}

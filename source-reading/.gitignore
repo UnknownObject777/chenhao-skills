@@ -1,0 +1,6 @@
+.DS_Store
+dist/
+/book.config.json
+__pycache__/
+*.pyc
+docs/_shots/

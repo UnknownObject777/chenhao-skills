@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>关于这本书 · 一台 Agent 运行时的安全观</title>
+<meta name="description" content="当它敢在你的机器上跑命令、连网络、带着你的凭据，它凭什么值得被信任。这里是三章样张，完整版三十二章精读 openai/codex，每一处论断都能回溯到源码的具体某一行。">
+<meta name="author" content="洛小山">
+<style>:root{--accent:#3f4a5a}</style>
+<link rel="stylesheet" href="assets/book.css">
+
+</head>
+<body class="is-colophon">
+<div class="progress"><i></i></div>
+
+<header class="topbar">
+  <a class="home" href="index.html">一台 Agent 运行时的安全观</a>
+  <span class="pos">封底</span>
+  <button class="theme" type="button" aria-label="切换深浅色"></button>
+</header>
+<main class="colophon">
+  <h1>关于这本书</h1>
+  <p class="lead">这本书里的每一处技术论断，都能回溯到源码的具体某一行。
+  下面这张表是成书时的实际数据，口径写在表头里。</p>
+
+  <table class="stat-table">
+    <thead><tr><th>章</th><th>标题</th><th>带行号引用</th><th>图</th><th>正文汉字</th></tr></thead>
+    <tbody><tr><td>01</td><td>crate 治理，一条不许往核心加代码的禁令</td><td>50</td><td>3</td><td>7408</td></tr><tr><td>02</td><td>三层 Turn Loop，任务壳、轮次、采样</td><td>39</td><td>3</td><td>5543</td></tr><tr><td>03</td><td>SSE 驱动的工具闭环，流内建 future，流后统一 drain</td><td>35</td><td>3</td><td>5987</td></tr></tbody>
+    <tfoot><tr><td colspan="2">合计</td><td>124</td>
+    <td>9</td><td>18938</td></tr></tfoot>
+  </table>
+
+  <h2>版本锚点</h2>
+  <p>正文里的所有行号对应下面这个版本。上游仓库一直在改，隔一段时间再照着查，行号可能已经漂了。</p>
+  <ul class="anchor-list">
+    <li>仓库：https://github.com/openai/codex</li>
+    <li>commit：<code>4f39251a01</code></li>
+    <li>tag：<code>course-anchor-20260822</code></li>
+    <li>核对日期：2026-08-22</li>
+  </ul>
+
+  <h2>怎么读</h2>
+  <ul class="how-list">
+    <li>代码块左侧是源文件里的真实行号，可以直接跳回原仓库对照</li>
+    <li>带 <b>逐段</b> 按钮的引用块中间有省略，点一下会按连续段落依次高亮，省略处不会被当成连续代码</li>
+    <li>每章末尾的思考题里至少有一道要动手改代码验证，那一道最值钱</li>
+  </ul>
+
+  <h2>这本书是怎么做出来的</h2>
+  <p>用一套公开的方法论：先锁版本锚点，再写带源码锚点的大纲，然后按八段结构逐章精读，
+  最后编成这本书。全程由脚本把每一个代码块拿回源文件逐字节比对，行号错了自动校正，
+  静默删行会被判定为编造并退回重写。</p>
+  <a class="method-link" href="https://github.com/itshen/source-reading-methodology" target="_blank" rel="noopener">
+    方法论与模板已开源，可直接取用</a>
+</main>
+
+<footer class="book-foot"><span>来自 <a href="https://github.com/itshen/source-reading-methodology" target="_blank" rel="noopener">洛小山·小山学堂方法论</a></span><a class="foot-repo" href="https://github.com/itshen/source-reading-methodology" target="_blank" rel="noopener">github.com/itshen/source-reading-methodology</a></footer>
+<script src="assets/book.js"></script>
+</body>
+</html>

@@ -30,6 +30,7 @@
 - [record-browser-gif](record-browser-gif/SKILL.md) — 把浏览器/网页交互演示录成优化过的 GIF，并为 PR 发布到独立的 assets 分支。
 - [to-kanban](to-kanban/SKILL.md) — 围绕当期最想推进的事情安排个人时间：月定方向、周定成果、日定行动，并维护 Obsidian 任务看板。
 - [x-bookmarks-to-obsidian](x-bookmarks-to-obsidian/SKILL.md) — 把 X 收藏夹批量转写进 Obsidian vault，clone 其中提到的 GitHub 仓库并转录开发文档笔记。
+- [source-reading](source-reading/SKILL.md) — 带 AI 精读大型开源仓库：四阶段工作流产出每句话可回溯到源码行的书稿/课程/文档，配机器校验器防幻觉。
 
 ## Install
 
